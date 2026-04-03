@@ -1,0 +1,21 @@
+package com.digitalfir.repository;
+
+import com.digitalfir.backend.model.Notification;
+import com.digitalfir.backend.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface NotificationRepository
+        extends JpaRepository<Notification, Long> {
+
+    List<Notification> findByUser(User user);
+
+    // 🔥 REQUIRED for sorting
+    List<Notification> findByUserOrderByCreatedAtDesc(User user);
+
+    long countByUserAndReadFalse(User user);
+
+    Optional<Notification> findByIdAndUser(Long id, User user);
+}

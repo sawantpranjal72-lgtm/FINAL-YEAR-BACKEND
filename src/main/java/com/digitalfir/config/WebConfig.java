@@ -15,8 +15,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                 "http://127.0.0.1:5500",
                 "http://localhost:5500",
-                "https://final-year-backend-production-1d3f.up.railway.app"
-            )
+                "https://final-year-backend-production-1d3f.up.railway.app",
+                "https://final-year-frontend-mu.vercel.app"
+             )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }

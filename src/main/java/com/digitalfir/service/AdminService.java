@@ -46,7 +46,7 @@ public class AdminService {
         user.setName(req.getName());
         user.setEmail(req.getEmail());
         user.setPassword(encoder.encode(req.getPassword()));
-        user.setRole(Role.POLICE);
+        user.setRole(Role.ROLE_POLICE);
         user.setEnabled(true); // admin created → enabled
 
         userRepo.save(user);
@@ -78,8 +78,8 @@ public class AdminService {
     public Map<String, Long> getDashboardStats() {
         Map<String, Long> map = new HashMap<>();
         map.put("totalUsers", userRepo.count());
-        map.put("policeCount", userRepo.countByRole(Role.POLICE));
-        map.put("citizenCount", userRepo.countByRole(Role.CITIZEN));
+        userRepo.countByRole(Role.ROLE_POLICE);
+        userRepo.countByRole(Role.ROLE_CITIZEN);
         map.put("disabledUsers", userRepo.countByEnabledFalse());
         return map;
     }

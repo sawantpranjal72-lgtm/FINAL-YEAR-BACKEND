@@ -53,6 +53,8 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
 
+                                   
+
                 // 🔥 PUBLIC METHODS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

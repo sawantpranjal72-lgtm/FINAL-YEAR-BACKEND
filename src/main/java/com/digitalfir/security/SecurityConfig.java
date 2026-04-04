@@ -30,10 +30,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtFilter,
-            CustomUserDetailsService userDetailsService
-    ) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter,
+                         CustomUserDetailsService userDetailsService) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -42,36 +40,24 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors().and()   // 🔥 IMPORTANT (CORS enable)
+            .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/login").permitAll()
-
-                .requestMatchers(
-                        "/api/auth/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**"
-                ).permitAll()
-
+                // 🔥 PUBLIC ROUTES
+                .requestMatchers("/", "/error").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/swagger-ui/**",
+                                 "/swagger-ui.html",
+                                 "/v3/api-docs/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
 
-                .requestMatchers(HttpMethod.GET, "/api/evidence/view/**").permitAll()
+                // 🔥 PUBLIC METHODS
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                .requestMatchers(
-                        "/api/evidence/upload/**",
-                        "/api/evidence/fir/**",
-                        "/api/evidence/admin/view/**",
-                        "/api/evidence/**"
-                ).hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
-
-                .requestMatchers("/notifications/**")
-                .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
-
-                .requestMatchers("/api/admin/**")
-                .hasAuthority("ROLE_ADMIN")
+                // 🔥 ROLE BASED
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
                 .requestMatchers(HttpMethod.POST, "/api/police/profile")
                 .hasAuthority("ROLE_POLICE")
@@ -96,23 +82,25 @@ public class SecurityConfig {
             )
 
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+
+            // 🔥 IMPORTANT FOR H2
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOrigins(List.of("*")); // 🔥 all allow (best now)
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    config.setAllowedHeaders(List.of("*"));
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-
-    return source;
-}
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -129,8 +117,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
+            AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

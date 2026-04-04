@@ -1,12 +1,10 @@
 package com.digitalfir.service;
 
 import com.digitalfir.backend.dto.AddPoliceRequest;
-import com.digitalfir.service.NotificationService;
 import com.digitalfir.backend.model.NotificationType;
 import com.digitalfir.backend.model.Role;
 import com.digitalfir.backend.model.User;
 import com.digitalfir.repository.UserRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,8 +15,7 @@ import java.util.Map;
 
 @Service
 public class AdminService {
-	
-	// 🔔 ADD THIS
+
     @Autowired
     private NotificationService notificationService;
 
@@ -46,20 +43,21 @@ public class AdminService {
         user.setName(req.getName());
         user.setEmail(req.getEmail());
         user.setPassword(encoder.encode(req.getPassword()));
-        user.setRole(Role.ROLE_POLICE);
-        user.setEnabled(true); // admin created → enabled
+        user.setRole(Role.POLICE);
+        user.setEnabled(true);
 
         userRepo.save(user);
     }
 
     // ================= ENABLE / DISABLE =================
     public void toggleUser(Long id) {
+
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setEnabled(!user.isEnabled());
         userRepo.save(user);
-        
-     // 🔔 NOTIFICATION
+
         String msg = user.isEnabled()
                 ? "Your account has been ENABLED by admin"
                 : "Your account has been DISABLED by admin";
@@ -67,20 +65,21 @@ public class AdminService {
         notificationService.createNotification(
                 user,
                 msg,
-                NotificationType.ACCOUNT_STATUS, // 👈 NEW TYPE
-                user.getId()                      // 👈 referenceId
+                NotificationType.ACCOUNT_STATUS,
+                user.getId()
         );
     }
-    
-    
 
     // ================= DASHBOARD STATS =================
     public Map<String, Long> getDashboardStats() {
+
         Map<String, Long> map = new HashMap<>();
+
         map.put("totalUsers", userRepo.count());
-        userRepo.countByRole(Role.ROLE_POLICE);
-        userRepo.countByRole(Role.ROLE_CITIZEN);
+        map.put("policeCount", userRepo.countByRole(Role.POLICE));
+        map.put("citizenCount", userRepo.countByRole(Role.CITIZEN));
         map.put("disabledUsers", userRepo.countByEnabledFalse());
+
         return map;
     }
 }

@@ -77,8 +77,6 @@ if (request.getRole() == null) {
 
         userRepository.save(user);
     }
-    public void deleteAllUsers() {
-    userRepository.deleteAll();
-}
+  
 }
 

@@ -119,10 +119,5 @@ public class AuthController {
 
         return ResponseEntity.ok("Password updated successfully");
     }
-    // last la add kar
-@DeleteMapping("/delete-all-users")
-public String deleteAllUsers() {
-    userService.deleteAllUsers();
-    return "All users deleted";
-}
+
 }

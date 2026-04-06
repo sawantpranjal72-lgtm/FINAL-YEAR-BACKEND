@@ -28,7 +28,11 @@ public class UserService {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.valueOf(request.getRole())); // default role
+    try {
+    user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+} catch (Exception e) {
+    user.setRole(Role.CITIZEN); // default role
+} // default role
 
         return userRepository.save(user);
     }

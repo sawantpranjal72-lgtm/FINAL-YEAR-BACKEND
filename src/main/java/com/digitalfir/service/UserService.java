@@ -24,15 +24,16 @@ public class UserService {
             throw new RuntimeException("Email already registered");
         }
 
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-    try {
-    user.setRole(Role.valueOf(request.getRole().toUpperCase()));
-} catch (Exception e) {
-    user.setRole(Role.CITIZEN); // default role
-} // default role
+      User user = new User();
+user.setName(request.getName());
+user.setEmail(request.getEmail());
+user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+if (request.getRole() == null) {
+    user.setRole(Role.CITIZEN); // default
+} else {
+    user.setRole(request.getRole());
+}
 
         return userRepository.save(user);
     }

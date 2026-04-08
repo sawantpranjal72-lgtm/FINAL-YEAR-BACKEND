@@ -16,12 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -30,8 +24,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter,
-                         CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtFilter,
+            CustomUserDetailsService userDetailsService
+    ) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -40,31 +36,43 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> {})
+            .cors().and()
             .csrf(csrf -> csrf.disable())
+
             .authorizeHttpRequests(auth -> auth
 
-                // 🔥 PUBLIC ROUTES
+                // ✅ PUBLIC
                 .requestMatchers("/", "/error").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**",
-                                 "/swagger-ui.html",
-                                 "/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/uploads/**").permitAll()              
-
-                // 🔥 PUBLIC METHODS
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 🔥 ROLE BASED
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                // ✅ EVIDENCE (UPLOAD FIX 🔥)
+                .requestMatchers(
+                        "/api/evidence/upload/**",
+                        "/api/evidence/fir/**",
+                        "/api/evidence/admin/view/**",
+                        "/api/evidence/**"
+                ).hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
 
+                // ✅ NOTIFICATIONS FIX
+                .requestMatchers("/notifications/**")
+                .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
+
+                // ✅ ADMIN
+                .requestMatchers("/api/admin/**")
+                .hasAuthority("ROLE_ADMIN")
+
+                // ✅ POLICE
                 .requestMatchers(HttpMethod.POST, "/api/police/profile")
                 .hasAuthority("ROLE_POLICE")
 
                 .requestMatchers(HttpMethod.GET, "/api/police/profile/me")
                 .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
+                // ✅ FIR
                 .requestMatchers(HttpMethod.POST, "/api/fir/create")
                 .hasAuthority("ROLE_CITIZEN")
 
@@ -74,6 +82,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/fir/**")
                 .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
 
+                // ✅ बाकी सगळं secure
                 .anyRequest().authenticated()
             )
 
@@ -84,22 +93,10 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
-            // 🔥 IMPORTANT FOR H2
+            // ✅ H2 console fix
             .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 
     @Bean
@@ -117,7 +114,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+            AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 }

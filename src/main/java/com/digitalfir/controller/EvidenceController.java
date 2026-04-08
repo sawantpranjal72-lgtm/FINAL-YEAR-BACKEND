@@ -25,13 +25,19 @@ public class EvidenceController {
     private EvidenceService evidenceService;
 
     // ================= UPLOAD =================
-    @PostMapping(value = "/upload/{firId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/{firId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Evidence> upload(
             @PathVariable Long firId,
-            @RequestPart MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        // ✅ Ensure uploads folder exists (VERY IMPORTANT 🔥)
+        java.io.File uploadDir = new java.io.File("uploads");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         return ResponseEntity.ok(
                 evidenceService.uploadEvidence(firId, file, auth.getName()));
     }
@@ -41,6 +47,7 @@ public class EvidenceController {
     public ResponseEntity<List<Evidence>> getByFir(@PathVariable Long firId) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         return ResponseEntity.ok(
                 evidenceService.getEvidenceByFir(firId, auth.getName()));
     }
@@ -53,12 +60,11 @@ public class EvidenceController {
         String type = Files.probeContentType(file.getFile().toPath());
 
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(type))
-            .header(HttpHeaders.CONTENT_DISPOSITION,
-                "inline; filename=\"" + file.getFilename() + "\"")
-            .body(file);
+                .contentType(MediaType.parseMediaType(type))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + file.getFilename() + "\"")
+                .body(file);
     }
-
 
     // ================= ADMIN VIEW =================
     @GetMapping("/admin/view/{id}")
@@ -80,11 +86,11 @@ public class EvidenceController {
     public ResponseEntity<String> delete(@PathVariable Long id) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         evidenceService.deleteEvidence(id, auth.getName());
 
         return ResponseEntity.ok("Evidence deleted successfully");
     }
 }
-
 
 
